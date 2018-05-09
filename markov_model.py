@@ -31,7 +31,7 @@ class MarkovChainModel(object):
             order=1, 
             prediction_cutoff=100, 
             base_path='./models/{}_o{}.pkl', 
-            class_dict_path='./data/unique_bytes.npy'):
+            class_dict_path='./unique_bytes.npy'):
         self.langs = langs
         self.order = order
         self.prediction_cutoff=prediction_cutoff
@@ -58,8 +58,7 @@ class MarkovChainModel(object):
                 with open(path, 'rb') as f:
                     model = pickle.load(f)
             except FileNotFoundError:
-                print('No model found for language: ', lang)
-                raise Exception
+                raise FileNotFoundError('No model found for language: ', lang)
             self.models.append(model)
         self.models = sparse.stack(self.models, axis=0)
         print('Done!')
