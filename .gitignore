@@ -4,3 +4,4 @@ __pycache__
 europarl-test.zip
 europarl.test
 wget-log
+LSTM_story.ipynb
