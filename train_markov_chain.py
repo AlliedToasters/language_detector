@@ -3,7 +3,6 @@ from sparse import COO, DOK
 import sys
 import pickle
 import argparse
-from markov_model import update_progress
 
 parser = argparse.ArgumentParser(description='markov_model.py')
 
@@ -15,7 +14,7 @@ parser.add_argument('-order', type=int, default=1,
                     help="""order of markov model.""")
 parser.add_argument('-num_bytes', type=int, default=100000,
                     help="""Specify the number of bytes to train on.""")
-parser.add_argument('-byte_class', default='./data/unique_bytes.npy',
+parser.add_argument('-byte_class', default='./unique_bytes.npy',
                     help="""location of class list""")
 
 
@@ -45,6 +44,7 @@ def markovize_bytes(byte_string, order=1, class_dict=byte_classes):
         try:
             byt = class_dict[str(true_byte)]
         except KeyError:
+            print('key error.')
             byt = class_dict['other']
         if not any(np.array(prev) < 0):
             loc = tuple(prev + [byt])
@@ -54,8 +54,6 @@ def markovize_bytes(byte_string, order=1, class_dict=byte_classes):
                 prev[j] = byt
             else:
                 prev[j] = prev[j+1]
-        #prog = (i+1)/len(byte_string)
-        #update_progress(prog)
     return mat
 
 def normalize_vecs(mat):
@@ -89,7 +87,7 @@ if __name__ in '__main__':
 
     order = opt.order
     print('training markov model of order: ', order)
-    model = train_markov_model(txt[:opt.num_bytes], order=order)
+    model = train_markov_model(txt[:min(opt.num_bytes, len(txt))], order=order)
 
 
     save_path = opt.save_model

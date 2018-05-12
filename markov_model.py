@@ -1,27 +1,7 @@
-def update_progress(progress):
-    """Displays or updates a console progress bar
-    Accepts a float between 0 and 1. Any int will be converted to a float.
-    A value under 0 represents a 'halt'.
-    A value at 1 or bigger represents 100%
-    """
-    barLength = 25 # Modify this to change the length of the progress bar
-    status = ""
-    if isinstance(progress, int):
-        progress = float(progress)
-    if not isinstance(progress, float):
-        progress = 0
-        status = "error: progress var must be float\r\n"
-    if progress < 0:
-        progress = 0
-        status = "Halt...\r\n"
-    if progress >= 1:
-        progress = 1
-        status = "Done...\r\n"
-    block = int(round(barLength*progress))
-    text = "\rProgress: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), round(progress*100, 2), status)
-    sys.stdout.write(text)
-    sys.stdout.flush()
-    
+import numpy as np
+import pickle
+import sparse
+
 class MarkovChainModel(object):
     """Generates a prediction based on pretrained markov matrices."""
     
@@ -29,7 +9,7 @@ class MarkovChainModel(object):
             self, 
             langs, 
             order=1, 
-            prediction_cutoff=100, 
+            prediction_cutoff=.9, 
             base_path='./models/{}_o{}.pkl', 
             class_dict_path='./unique_bytes.npy'):
         self.langs = langs
@@ -69,6 +49,8 @@ class MarkovChainModel(object):
         class_dict = self.class_dict
         order = self.order
         prev = [-1 for i in range(order)]
+        #initialize scores to nonzero values.
+        scores = self.softmax(scores)
         for i, true_byte in enumerate(byte_string):
             #reference dict to get byte index
             try:
@@ -77,15 +59,17 @@ class MarkovChainModel(object):
                 byt = class_dict['other']
             if not any(np.array(prev) < 0):
                 loc = tuple([slice(None)] + prev + [byt])
-                scores += self.models[loc].todense()
+                arr = self.models[loc].todense()
+                arr = self.softmax(arr)
+                scores *= arr
+                scores *= (1/scores.sum())
             for j, val in enumerate(prev):
                 if j == (len(prev) - 1):
                     prev[j] = byt
                 else:
                     prev[j] = prev[j+1]
-            if i > self.prediction_cutoff:
-                if (scores.max() - scores.mean()) > self.order:
-                    break
+            if scores.max() > self.prediction_cutoff:
+                break
         return scores
     
     def softmax(self, x):
@@ -98,8 +82,19 @@ class MarkovChainModel(object):
         scores = np.zeros(self.models.shape[0])
         scores = self.rolling_probs(byte_string, scores)
         #take softmax of outputs
-        scores_vec = self.softmax(scores)
-        return scores_vec
+        return scores
+    
+    def decode(self, encoded_class):
+        """Takes a number and returns a string with the corresponding class."""
+        return self.langs[encoded_class]
+    
+    def encode(self, class_string):
+        """Takes a string and converts it to its encoded value."""
+        try:
+            idx = self.langs.index(class_string)
+        except ValueError:
+            raise ValueError('Input string not found in class list.')
+        return idx
     
     def predict_class(self, byte_string):
         """Makes prediction and returns class with highest probability.
@@ -107,4 +102,5 @@ class MarkovChainModel(object):
         """
         scores_vec = self.predict(byte_string)
         arg = np.argmax(scores_vec)
-        return self.langs[arg]
+        return self.decode(arg)
+    
