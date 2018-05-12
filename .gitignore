@@ -3,3 +3,4 @@ __pycache__
 .ipynb_checkpoints
 europarl-test.zip
 europarl.test
+wget-log
