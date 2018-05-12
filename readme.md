@@ -1,0 +1,10 @@
+# Language Detection Project
+This is a language detector that I built using a Markov chain model. I use the Google language detection library to crate a [benchmark performance](https://github.com/AlliedToasters/language_detector/blob/master/benchmark.ipynb) on the validation set and then show that Markov chain probabilities from byte sequences are [able to outperform Google](https://github.com/AlliedToasters/language_detector/blob/master/markov_chain_language_detection.ipynb), at the cost of higher computation time.<br><br>
+Special thanks to Mimino666(https://github.com/Mimino666) for putting together [langdetect](https://github.com/Mimino666/langdetect), a python port for Google's language detection libraries, and to [mrocklin](https://github.com/mrocklin) for putting together [sparse](http://sparse.pydata.org/en/latest/), a python package for high-dimensional sparse matrices. Both of these projects made this task relatively simple.
+
+## Reproducing Results
+For anybody interested reproducing or expanding on my results, the presentation notebook can be run as-is if the repository is copied exactly and run on an Ubuntu 16.04 machine. With a few small edits, you can train new models. The Markov model scripts can handle arbitrarily-ordered Markov chains, with the limit being model storage and, from a practical standpoint, performance. I experimented with 10th order models with modest results, but such a model would only do well given more training data (and training takes a while.)
+
+## Future Work
+Markov chain models are clearly powerful for classification of sequences, but I couldn't find any solid python packages to apply this. First-order models are covered by [hmmlearn](https://github.com/hmmlearn/hmmlearn), an offshoot of sklearn, but higher order models are notably absent.<br><br>
+I may want to put together a package to generalize this model to any sequence problem; the coding was relatively simple. It would be interesting to try to optimize the model for faster performance.
